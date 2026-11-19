@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: ft-starter-backend
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 405MB
+      file-size-threshold: 2MB
+
+server:
+  port: ${SERVER_PORT:8080}
+
+app:
+  storage:
+    root-path: ${APP_STORAGE_ROOT_PATH:uploads}
+  upload:
+    max-file-size: 20MB
+    max-files: 20
+    allowed-extensions: [pdf, png, jpg, jpeg]
+  n8n:
+    base-url: ${N8N_BASE_URL:http://localhost:5678/webhook}
+    timeout: ${N8N_TIMEOUT:30s}
+    connect-timeout: 5s
+    response-timeout: 30s
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+      - http://127.0.0.1:5173
+
+resilience4j:
+  retry:
+    instances:
+      n8nAnalysis:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - com.ftstarter.shared.exception.N8nTransientException
+          - com.ftstarter.shared.exception.N8nTimeoutException
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: FT Starter Backend
+    description: Backend de démonstration sans persistance relationnelle
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  structured:
+    format:
+      console: logstash
