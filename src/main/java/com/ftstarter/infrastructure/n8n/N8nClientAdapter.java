@@ -76,7 +76,7 @@ public class N8nClientAdapter implements AnalysisWorkflowPort {
                         .toList());
 
         N8nAnalysisResponse response = webClient.post()
-                .uri("document-analysis")
+                .uri("analyze")
                 .bodyValue(request)
                 .retrieve()
                 .onStatus(HttpStatusCode::is5xxServerError, this::transientError)

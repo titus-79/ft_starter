@@ -15,7 +15,7 @@ Le backend écoute sur `http://localhost:8080`. L'interface Swagger UI est dispo
 ### APIs
 
 - `POST /api/v1/documents/upload` — multipart avec un ou plusieurs champs `files[]`. Maximum 20 fichiers, PDF/PNG/JPG/JPEG, 20 Mo par fichier. Répond avec l'`uploadId`, le statut et le nombre de fichiers.
-- `POST /api/v1/analysis/{uploadId}` — lit les documents stockés, les encode en Base64, appelle `POST {n8n.base-url}/document-analysis`, puis renvoie la réponse normalisée.
+- `POST /api/v1/analysis/{uploadId}` — lit les documents stockés, les encode en Base64, appelle `POST {n8n.base-url}/analyze`, puis renvoie la réponse normalisée.
 - `GET /api/v1/analysis/{uploadId}` — consulte le résultat en mémoire ; renvoie `404 ANALYSIS_NOT_FOUND` avant l'analyse.
 
 Les erreurs ont le format `{ timestamp, code, message, details }`. Les réponses d'analyse n8n sont normalisées vers `confidenceScore`, `documentsDetected` et `applicant`, avec `employmentCertificates` pour les attestations employeur.
@@ -25,11 +25,11 @@ Les erreurs ont le format `{ timestamp, code, message, details }`. Les réponses
 Valeurs par défaut dans `src/main/resources/application.yml` :
 
 - `app.storage.root-path=uploads` : répertoire local des fichiers, organisé par upload.
-- `app.n8n.base-url=http://localhost:5678/webhook` : URL de base ; le backend appelle `/document-analysis`.
+- `app.n8n.base-url=https://n8n.hackeuse.fr/webhook-test/ft_starter` : URL de base ; le backend appelle `/analyze`, soit `https://n8n.hackeuse.fr/webhook-test/ft_starter/analyze`.
 - `app.n8n.timeout=30s` : délai maximal de l'analyse.
 - Resilience4j retente automatiquement les erreurs réseau, timeouts et erreurs serveur n8n.
 
-Les variables `APP_STORAGE_ROOT_PATH`, `N8N_BASE_URL`, `N8N_TIMEOUT` et `SERVER_PORT` permettent de surcharger les principaux paramètres.
+Les variables `APP_STORAGE_ROOT_PATH`, `N8N_BASE_URL`, `N8N_TIMEOUT` et `SERVER_PORT` permettent de surcharger les principaux paramètres. `N8N_BASE_URL` doit désigner le préfixe du webhook, sans `/analyze`.
 
 Les sessions de dépôt et les résultats d'analyse sont conservés dans des `ConcurrentHashMap` et sont perdus au redémarrage. Les fichiers restent dans `uploads/`. Aucune base de données n'est utilisée.
 

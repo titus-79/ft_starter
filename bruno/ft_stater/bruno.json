@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "ft_stater",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

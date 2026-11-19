@@ -49,7 +49,7 @@ class N8nClientAdapterTest {
 
     @Test
     void postsBase64DocumentsAndNormalizesN8nResponse() {
-        wireMock.stubFor(post(urlEqualTo("/webhook/document-analysis"))
+        wireMock.stubFor(post(urlEqualTo("/webhook/analyze"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withBody("""
@@ -75,7 +75,7 @@ class N8nClientAdapterTest {
         assertEquals(
                 "Capgemini",
                 result.applicant().employmentCertificates().getFirst().employerName());
-        wireMock.verify(postRequestedFor(urlEqualTo("/webhook/document-analysis"))
+        wireMock.verify(postRequestedFor(urlEqualTo("/webhook/analyze"))
                 .withRequestBody(
                         com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath(
                                 "$.documents[0].base64",
@@ -84,7 +84,7 @@ class N8nClientAdapterTest {
 
     @Test
     void convertsWorkflowServerErrorsToRetriableErrors() {
-        wireMock.stubFor(post(urlEqualTo("/webhook/document-analysis"))
+        wireMock.stubFor(post(urlEqualTo("/webhook/analyze"))
                 .willReturn(aResponse().withStatus(503)));
 
         assertThrows(
@@ -94,7 +94,7 @@ class N8nClientAdapterTest {
 
     @Test
     void convertsClientErrorsToGatewayErrorsWithoutRetryClassification() {
-        wireMock.stubFor(post(urlEqualTo("/webhook/document-analysis"))
+        wireMock.stubFor(post(urlEqualTo("/webhook/analyze"))
                 .willReturn(aResponse().withStatus(400)));
 
         assertThrows(
@@ -104,7 +104,7 @@ class N8nClientAdapterTest {
 
     @Test
     void appliesTheConfiguredWorkflowTimeout() {
-        wireMock.stubFor(post(urlEqualTo("/webhook/document-analysis"))
+        wireMock.stubFor(post(urlEqualTo("/webhook/analyze"))
                 .willReturn(aResponse().withFixedDelay(500).withStatus(200)));
 
         assertThrows(

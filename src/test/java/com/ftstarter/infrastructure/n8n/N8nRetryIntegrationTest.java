@@ -47,12 +47,12 @@ class N8nRetryIntegrationTest {
 
     @Test
     void retriesTransientN8nErrorsAndReturnsTheNormalizedResult() {
-        wireMock.stubFor(post(urlEqualTo("/webhook/document-analysis"))
+        wireMock.stubFor(post(urlEqualTo("/webhook/analyze"))
                 .inScenario("retry-once")
                 .whenScenarioStateIs(Scenario.STARTED)
                 .willReturn(aResponse().withStatus(503))
                 .willSetStateTo("available"));
-        wireMock.stubFor(post(urlEqualTo("/webhook/document-analysis"))
+        wireMock.stubFor(post(urlEqualTo("/webhook/analyze"))
                 .inScenario("retry-once")
                 .whenScenarioStateIs("available")
                 .willReturn(aResponse()
@@ -71,7 +71,7 @@ class N8nRetryIntegrationTest {
 
         assertEquals(0.94, result.confidenceScore());
         assertEquals("Jean", result.applicant().firstName());
-        wireMock.verify(2, postRequestedFor(urlEqualTo("/webhook/document-analysis")));
+        wireMock.verify(2, postRequestedFor(urlEqualTo("/webhook/analyze")));
     }
 
     private static WireMockServer startWireMock() {
