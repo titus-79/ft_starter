@@ -19,7 +19,7 @@ app:
     max-files: 20
     allowed-extensions: [pdf, png, jpg, jpeg]
   n8n:
-    base-url: ${N8N_BASE_URL:https://n8n.hackeuse.fr/webhook/ft_starter}
+    base-url: ${N8N_BASE_URL:https://n8n.hackeuse.fr/webhook-test/ft_starter}
     timeout: ${N8N_TIMEOUT:30s}
     connect-timeout: 5s
     response-timeout: 30s

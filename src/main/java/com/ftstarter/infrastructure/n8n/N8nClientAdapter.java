@@ -10,6 +10,7 @@ import com.ftstarter.shared.exception.N8nTimeoutException;
 import com.ftstarter.shared.exception.N8nTransientException;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
+import org.springframework.core.codec.DecodingException;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,14 @@ public class N8nClientAdapter implements AnalysisWorkflowPort {
                     exception instanceof N8nTimeoutException ? "N8N_TIMEOUT" : "N8N_ERROR",
                     exception.getClass().getSimpleName());
             throw exception;
+        } catch (DecodingException exception) {
+            log.error(
+                    "n8n response decoding failed: uploadId={}, exceptionType={}",
+                    payload.uploadId(),
+                    exception.getClass().getSimpleName());
+            throw new N8nAnalysisException(
+                    "n8n response does not match the expected JSON format",
+                    exception);
         } catch (RuntimeException exception) {
             log.error(
                     "Unexpected n8n client error: uploadId={}, exceptionType={}",
@@ -63,7 +72,7 @@ public class N8nClientAdapter implements AnalysisWorkflowPort {
 
     private ApplicantExtractionResponse sendAnalysis(AnalysisPayload payload) {
         log.info(
-                "Sending document analysis to n8n: uploadId={}, documentCount={}",
+                "n8n webhook request started: uploadId={}, documentCount={}",
                 payload.uploadId(),
                 payload.documents().size());
         N8nAnalysisRequest request = new N8nAnalysisRequest(
@@ -79,9 +88,19 @@ public class N8nClientAdapter implements AnalysisWorkflowPort {
                 .uri("analyze")
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(HttpStatusCode::is5xxServerError, this::transientError)
-                .onStatus(HttpStatusCode::is4xxClientError, this::rejectedRequest)
+                .onStatus(
+                        HttpStatusCode::is5xxServerError,
+                        clientResponse -> transientError(clientResponse, payload.uploadId()))
+                .onStatus(
+                        HttpStatusCode::is4xxClientError,
+                        clientResponse -> rejectedRequest(clientResponse, payload.uploadId()))
                 .bodyToMono(N8nAnalysisResponse.class)
+                .doOnNext(n8nResponse -> log.info(
+                        "n8n webhook response decoded: uploadId={}, detectedDocumentCount={}",
+                        payload.uploadId(),
+                        n8nResponse.documentsDetected() == null
+                                ? 0
+                                : n8nResponse.documentsDetected().size()))
                 .timeout(n8nProperties.timeout())
                 .onErrorMap(
                         TimeoutException.class,
@@ -96,6 +115,7 @@ public class N8nClientAdapter implements AnalysisWorkflowPort {
                 .block(n8nProperties.timeout().plusSeconds(1));
 
         if (response == null) {
+            log.error("n8n webhook returned an empty response: uploadId={}", payload.uploadId());
             throw new N8nAnalysisException("n8n returned an empty response");
         }
         ApplicantExtractionResponse result = mapper.normalize(response);
@@ -106,12 +126,20 @@ public class N8nClientAdapter implements AnalysisWorkflowPort {
         return result;
     }
 
-    private Mono<? extends Throwable> transientError(ClientResponse response) {
+    private Mono<? extends Throwable> transientError(ClientResponse response, String uploadId) {
+        log.warn(
+                "n8n webhook returned a server error: uploadId={}, status={}",
+                uploadId,
+                response.statusCode().value());
         return response.releaseBody().thenReturn(
                 new N8nTransientException("n8n returned a server error", null));
     }
 
-    private Mono<? extends Throwable> rejectedRequest(ClientResponse response) {
+    private Mono<? extends Throwable> rejectedRequest(ClientResponse response, String uploadId) {
+        log.warn(
+                "n8n webhook rejected the request: uploadId={}, status={}",
+                uploadId,
+                response.statusCode().value());
         return response.releaseBody().thenReturn(
                 new N8nAnalysisException("n8n rejected the analysis request"));
     }

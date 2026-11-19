@@ -19,10 +19,14 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UploadDocumentsUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(UploadDocumentsUseCase.class);
 
     private final UploadSessionRepository sessionRepository;
     private final DocumentStoragePort storage;
@@ -44,14 +48,45 @@ public class UploadDocumentsUseCase {
     }
 
     public UploadSession execute(List<IncomingDocument> files) {
-        validateFiles(files);
+        int documentCount = files == null ? 0 : files.size();
+        long totalSizeBytes = files == null
+                ? 0
+                : files.stream()
+                        .filter(file -> file != null)
+                        .mapToLong(IncomingDocument::sizeBytes)
+                        .sum();
+        log.info(
+                "Document validation started: documentCount={}, totalSizeBytes={}",
+                documentCount,
+                totalSizeBytes);
+        try {
+            validateFiles(files);
+        } catch (RuntimeException exception) {
+            log.warn(
+                    "Document validation failed: documentCount={}, exceptionType={}",
+                    documentCount,
+                    exception.getClass().getSimpleName());
+            throw exception;
+        }
+        log.info("Document validation completed: documentCount={}", documentCount);
+
         String uploadId = uploadIdGenerator.generate();
+        log.info("Upload session allocated: uploadId={}", uploadId);
         List<DocumentMetadata> storedDocuments = new ArrayList<>();
 
         try {
+            int documentIndex = 0;
             for (IncomingDocument file : files) {
+                documentIndex++;
                 String extension = extensionOf(file.originalName());
                 String mimeType = mimeTypeFor(extension);
+                log.info(
+                        "Document storage started: uploadId={}, documentIndex={}, documentCount={}, sizeBytes={}, mimeType={}",
+                        uploadId,
+                        documentIndex,
+                        documentCount,
+                        file.sizeBytes(),
+                        mimeType);
                 try (InputStream content = file.content().open()) {
                     storedDocuments.add(storage.store(
                             uploadId,
@@ -60,11 +95,26 @@ public class UploadDocumentsUseCase {
                             file.sizeBytes(),
                             content));
                 }
+                log.info(
+                        "Document storage completed: uploadId={}, documentIndex={}, documentCount={}",
+                        uploadId,
+                        documentIndex,
+                        documentCount);
             }
         } catch (IOException exception) {
+            log.error(
+                    "Document storage failed: uploadId={}, storedDocumentCount={}, exceptionType={}",
+                    uploadId,
+                    storedDocuments.size(),
+                    exception.getClass().getSimpleName());
             try {
                 storage.deleteUpload(uploadId);
+                log.info("Partial upload cleanup completed: uploadId={}", uploadId);
             } catch (IOException cleanupException) {
+                log.error(
+                        "Partial upload cleanup failed: uploadId={}, exceptionType={}",
+                        uploadId,
+                        cleanupException.getClass().getSimpleName());
                 exception.addSuppressed(cleanupException);
             }
             throw new StorageException("Could not store uploaded documents", exception);
@@ -75,7 +125,25 @@ public class UploadDocumentsUseCase {
                 UploadStatus.UPLOADED,
                 storedDocuments,
                 Instant.now(clock));
-        return sessionRepository.save(session);
+        log.info(
+                "Upload session persistence started: uploadId={}, documentCount={}",
+                uploadId,
+                storedDocuments.size());
+        try {
+            UploadSession savedSession = sessionRepository.save(session);
+            log.info(
+                    "Upload session persistence completed: uploadId={}, documentCount={}, status={}",
+                    savedSession.uploadId(),
+                    savedSession.documents().size(),
+                    savedSession.status());
+            return savedSession;
+        } catch (RuntimeException exception) {
+            log.error(
+                    "Upload session persistence failed: uploadId={}, exceptionType={}",
+                    uploadId,
+                    exception.getClass().getSimpleName());
+            throw exception;
+        }
     }
 
     private void validateFiles(List<IncomingDocument> files) {

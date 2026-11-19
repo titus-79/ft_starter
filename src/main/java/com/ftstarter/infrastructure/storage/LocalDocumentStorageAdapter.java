@@ -10,11 +10,14 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LocalDocumentStorageAdapter implements DocumentStoragePort {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalDocumentStorageAdapter.class);
     private static final Pattern UPLOAD_ID_PATTERN =
             Pattern.compile("UPL-\\d{4}-[A-F0-9]{12}");
 
@@ -34,12 +37,19 @@ public class LocalDocumentStorageAdapter implements DocumentStoragePort {
             long sizeBytes,
             InputStream content) throws IOException {
         Path sessionDirectory = sessionDirectory(uploadId);
+        log.debug("Creating local upload directory: uploadId={}", uploadId);
         Files.createDirectories(sessionDirectory);
 
         String safeName = safeFilename(originalName);
         Path target = uniqueTarget(sessionDirectory, safeName);
+        log.debug(
+                "Writing local document: uploadId={}, sizeBytes={}, mimeType={}",
+                uploadId,
+                sizeBytes,
+                mimeType);
         Files.copy(content, target);
         String storageKey = rootPath.relativize(target).toString();
+        log.debug("Local document write completed: uploadId={}, sizeBytes={}", uploadId, sizeBytes);
 
         return new DocumentMetadata(
                 safeName,

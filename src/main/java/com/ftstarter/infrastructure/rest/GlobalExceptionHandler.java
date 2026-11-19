@@ -27,6 +27,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException exception) {
+        log.warn(
+                "API request rejected: code={}, status={}, exceptionType={}",
+                exception.code(),
+                exception.status().value(),
+                exception.getClass().getSimpleName());
         return ResponseEntity.status(exception.status())
                 .body(new ErrorResponse(
                         Instant.now(),
@@ -45,6 +50,9 @@ public class GlobalExceptionHandler {
         HttpMessageNotReadableException.class
     })
     public ResponseEntity<ErrorResponse> handleValidationException(Exception exception) {
+        log.warn(
+                "API request validation failed: exceptionType={}",
+                exception.getClass().getSimpleName());
         List<String> details;
         if (exception instanceof MethodArgumentNotValidException validationException) {
             details = validationException.getBindingResult().getFieldErrors().stream()
@@ -80,6 +88,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSize(
             MaxUploadSizeExceededException exception) {
+        log.warn(
+                "Document upload rejected: code=DOCUMENT_TOO_LARGE, exceptionType={}",
+                exception.getClass().getSimpleName());
         return error(
                 HttpStatus.PAYLOAD_TOO_LARGE,
                 "DOCUMENT_TOO_LARGE",
@@ -90,6 +101,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<ErrorResponse> handleMultipartException(
             MultipartException exception) {
+        log.warn(
+                "Document upload rejected: code=INVALID_DOCUMENT, exceptionType={}",
+                exception.getClass().getSimpleName());
         return error(
                 HttpStatus.BAD_REQUEST,
                 "INVALID_DOCUMENT",
