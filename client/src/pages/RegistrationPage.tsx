@@ -14,12 +14,9 @@ import {
 } from "../services/applicantMapper";
 
 export function RegistrationPage() {
-  const [selectedEmployerCertificate, setSelectedEmployerCertificate] =
-    useState(false);
   const [detectedEmployerCertificate, setDetectedEmployerCertificate] =
     useState(false);
-  const hasEmployerCertificate =
-    selectedEmployerCertificate || detectedEmployerCertificate;
+  const hasEmployerCertificate = detectedEmployerCertificate;
   const form = useApplicantForm(hasEmployerCertificate);
   const [injectedFields, setInjectedFields] = useState<
     Set<keyof ApplicantFormValues>
@@ -59,10 +56,6 @@ export function RegistrationPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const handleEmployerCertificateChange = useCallback((present: boolean) => {
-    setSelectedEmployerCertificate(present);
-  }, []);
-
   function clearInjected(field: keyof ApplicantFormValues) {
     setInjectedFields((current) => {
       const next = new Set(current);
@@ -92,10 +85,7 @@ export function RegistrationPage() {
       )}
       <div className="content-grid">
         <div className="main-column">
-          <UploadSection
-            onEmployerCertificateChange={handleEmployerCertificateChange}
-            onAnalysisResult={handleAnalysisResult}
-          />
+          <UploadSection onAnalysisResult={handleAnalysisResult} />
           <RegistrationForm
             form={form}
             injectedFields={injectedFields}

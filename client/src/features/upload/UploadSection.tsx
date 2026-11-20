@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Icon } from "../../components/Icon";
 import {
   documentTypes,
@@ -13,10 +13,9 @@ import {
   uploadDocuments,
   type ApplicantExtractionResponse,
 } from "../../services/api";
-import type { DocumentType, UploadedDocument } from "../../types/applicant";
+import type { UploadedDocument } from "../../types/applicant";
 
 type Props = {
-  onEmployerCertificateChange: (present: boolean) => void;
   onAnalysisResult: (result: ApplicantExtractionResponse) => void;
 };
 
@@ -35,16 +34,11 @@ function createDocument(file: File): UploadedDocument {
     file,
     progress: 5,
     status: "uploading",
-    documentType: "",
   };
 }
 
-export function UploadSection({
-  onEmployerCertificateChange,
-  onAnalysisResult,
-}: Props) {
+export function UploadSection({ onAnalysisResult }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const previousCertificateRef = useRef(false);
   const activeAnalysisIds = useRef(new Set<string>());
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -171,19 +165,6 @@ export function UploadSection({
     await uploadBatch([{ ...document, status: "uploading" }]);
   }
 
-  const hasEmployerCertificate = documents.some(
-    (document) =>
-      (document.documentType === "Attestation employeur" ||
-        document.documentType === "Attestation de travail") &&
-      document.status !== "error",
-  );
-
-  useEffect(() => {
-    if (previousCertificateRef.current === hasEmployerCertificate) return;
-    previousCertificateRef.current = hasEmployerCertificate;
-    onEmployerCertificateChange(hasEmployerCertificate);
-  }, [hasEmployerCertificate, onEmployerCertificateChange]);
-
   return (
     <section
       className="card upload-card"
@@ -287,28 +268,6 @@ export function UploadSection({
                   </span>
                 )}
               </span>
-              <select
-                className="file-type-select"
-                aria-label={`Type de document pour ${document.name}`}
-                value={document.documentType}
-                onChange={(event) => {
-                  const documentType = event.target.value as DocumentType | "";
-                  setDocuments((current) =>
-                    current.map((item) =>
-                      item.id === document.id
-                        ? { ...item, documentType }
-                        : item,
-                    ),
-                  );
-                }}
-              >
-                <option value="">Type de document…</option>
-                {documentTypes.map((type) => (
-                  <option value={type} key={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
               <span
                 className={`file-status ${document.status}`}
                 aria-label={

@@ -16,16 +16,17 @@ Commandes de vérification :
 ```sh
 npm run build
 npm run lint
+npm run format:check
 ```
 
 ## Parcours
 
 - Déposez jusqu'à 20 fichiers PDF, JPG ou PNG de 20 Mo maximum chacun. Le front les envoie à `POST /api/v1/documents/upload`, puis transmet l'`uploadId` retourné à `POST /api/v1/analysis/{uploadId}`.
-- Les données retournées par l'analyse pré-remplissent les champs connus. Pour les attestations employeur, les champs professionnels sont également alimentés par l'attestation la plus récente et deviennent obligatoires.
+- Le type de document n'est pas sélectionné manuellement : le workflow n8n identifie les documents transmis. Les données retournées pré-remplissent les champs connus. Pour les attestations employeur, les champs professionnels sont alimentés par l'attestation la plus récente et deviennent obligatoires.
 - Les diplômes extraits sont affichés dans une liste modifiable sans limite, triée de l'année d'obtention la plus récente à la plus ancienne. Il est possible d'ajouter ou de supprimer des diplômes.
 - Les erreurs renvoyées par le backend (code, message et détails) ainsi que les erreurs réseau et de délai d'attente sont affichées dans l'interface. Le dépôt ou l'analyse en échec peuvent être relancés.
 - La soumission vérifie les champs obligatoires côté client. Aucune route backend ne permet encore de transmettre le dossier final.
-- Le commutateur du bandeau permet de passer en thème sombre.
+- Le commutateur du bandeau fait défiler les thèmes clair, sombre et arc-en-ciel. L'animation décorative du thème arc-en-ciel respecte la préférence système de réduction des animations. Le logo officiel France Travail est fourni localement.
 
 ## Connexion au backend
 

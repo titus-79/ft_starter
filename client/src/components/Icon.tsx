@@ -5,6 +5,7 @@ type IconName =
   | "chevron"
   | "file"
   | "moon"
+  | "rainbow"
   | "sun"
   | "upload"
   | "trash"
@@ -23,6 +24,13 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   moon: <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />,
+  rainbow: (
+    <>
+      <path d="M3 19a9 9 0 0 1 18 0" />
+      <path d="M7 19a5 5 0 0 1 10 0" />
+      <path d="M11 19a1 1 0 0 1 2 0" />
+    </>
+  ),
   sun: (
     <>
       <circle cx="12" cy="12" r="4" />

@@ -3,13 +3,19 @@ import { MainLayout } from "./layouts/MainLayout";
 import { RegistrationPage } from "./pages/RegistrationPage";
 import "./App.css";
 
+type ThemeMode = "light" | "dark" | "rainbow";
+
 function App() {
-  const [darkMode, setDarkMode] = useState(false);
+  const [theme, setTheme] = useState<ThemeMode>("light");
+
+  function cycleTheme() {
+    setTheme((current) =>
+      current === "light" ? "dark" : current === "dark" ? "rainbow" : "light",
+    );
+  }
+
   return (
-    <MainLayout
-      darkMode={darkMode}
-      onToggleTheme={() => setDarkMode((mode) => !mode)}
-    >
+    <MainLayout theme={theme} onCycleTheme={cycleTheme}>
       <RegistrationPage />
     </MainLayout>
   );

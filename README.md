@@ -25,7 +25,7 @@ Les erreurs ont le format `{ timestamp, code, message, details }`. Les réponses
 Valeurs par défaut dans `src/main/resources/application.yml` :
 
 - `app.storage.root-path=uploads` : répertoire local des fichiers, organisé par upload.
-- `app.n8n.base-url=https://n8n.hackeuse.fr/webhook-test/ft_starter` : URL de base ; le backend appelle `/analyze`, soit `https://n8n.hackeuse.fr/webhook-test/ft_starter/analyze`.
+- `app.n8n.base-url=https://n8n.hackeuse.fr/webhook/ft_starter` : URL de base ; le backend appelle `/analyze`, soit `https://n8n.hackeuse.fr/webhook/ft_starter/analyze`.
 - `app.n8n.timeout=30s` : délai maximal de l'analyse.
 - Resilience4j retente automatiquement les erreurs réseau, timeouts et erreurs serveur n8n.
 
@@ -52,4 +52,6 @@ npm install
 npm run dev
 ```
 
-Le frontend utilise le dépôt de documents et l'analyse (`POST /api/v1/documents/upload`, `POST /api/v1/analysis/{uploadId}`) via Axios. En développement, Vite relaie `/api` vers le backend `http://localhost:8080`. La soumission finale du dossier n'est pas encore exposée par le backend. Voir [client/README.md](./client/README.md).
+Le frontend utilise le dépôt de documents et l'analyse (`POST /api/v1/documents/upload`, puis `POST /api/v1/analysis/{uploadId}`) via Axios. Il accepte jusqu'à 20 fichiers PDF, JPG ou PNG de 20 Mo maximum chacun ; le type de document est déterminé par l'analyse, sans sélection manuelle dans l'interface. L'analyse pré-remplit les informations extraites, y compris les diplômes et les attestations employeur. Aucune extraction n'est exécutée dans le navigateur.
+
+En développement, Vite relaie `/api` vers le backend `http://localhost:8080`. La soumission finale du dossier n'est pas encore exposée par le backend. L'interface propose les thèmes clair, sombre et arc-en-ciel. Voir [client/README.md](./client/README.md) pour les commandes, le parcours et l'organisation du frontend.

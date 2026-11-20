@@ -2,28 +2,35 @@ import type { ReactNode } from "react";
 import { Icon } from "../components/Icon";
 
 export function MainLayout({
-  darkMode,
-  onToggleTheme,
+  theme,
+  onCycleTheme,
   children,
 }: {
-  darkMode: boolean;
-  onToggleTheme: () => void;
+  theme: "light" | "dark" | "rainbow";
+  onCycleTheme: () => void;
   children: ReactNode;
 }) {
+  const nextThemeLabel =
+    theme === "light"
+      ? "Activer le mode sombre"
+      : theme === "dark"
+        ? "Activer le mode arc-en-ciel"
+        : "Revenir au mode clair";
+  const themeLabel =
+    theme === "light"
+      ? "Mode sombre"
+      : theme === "dark"
+        ? "Mode arc-en-ciel"
+        : "Mode clair";
+  const themeIcon =
+    theme === "light" ? "moon" : theme === "dark" ? "rainbow" : "sun";
+
   return (
-    <div className={`app-shell${darkMode ? " dark-mode" : ""}`}>
+    <div className={`app-shell${theme === "light" ? "" : ` ${theme}-mode`}`}>
       <header className="site-header">
         <div className="header-inner">
           <a className="brand" href="#top" aria-label="France Travail, accueil">
-            <span className="brand-mark" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-              <i />
-            </span>
-            <span className="brand-name">
-              france<span>travail</span>
-            </span>
+            <img className="brand-logo" src="/france-travail-logo.svg" alt="" />
           </a>
           <div className="header-actions">
             <span className="demo-pill">
@@ -32,13 +39,11 @@ export function MainLayout({
             <button
               className="theme-toggle"
               type="button"
-              onClick={onToggleTheme}
-              aria-label={
-                darkMode ? "Activer le thème clair" : "Activer le thème sombre"
-              }
+              onClick={onCycleTheme}
+              aria-label={nextThemeLabel}
             >
-              <Icon name={darkMode ? "sun" : "moon"} />
-              <span>{darkMode ? "Mode clair" : "Mode sombre"}</span>
+              <Icon name={themeIcon} />
+              <span>{themeLabel}</span>
             </button>
           </div>
         </div>

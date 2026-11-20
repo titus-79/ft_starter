@@ -1,7 +1,6 @@
 export const documentTypes = [
   "Carte nationale d’identité",
   "Passeport",
-  "Titre de séjour",
   "CV",
   "Justificatif de domicile",
   "Relevé d’identité bancaire",

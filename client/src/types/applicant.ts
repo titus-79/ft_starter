@@ -1,5 +1,3 @@
-import type { documentTypes } from "../constants/formOptions";
-
 export type ApplicantFormValues = {
   lastName: string;
   birthName: string;
@@ -35,7 +33,6 @@ export type ApplicantFormValues = {
 };
 
 export type ApplicantField = keyof ApplicantFormValues;
-export type DocumentType = (typeof documentTypes)[number];
 
 export type UploadedDocument = {
   id: string;
@@ -45,7 +42,6 @@ export type UploadedDocument = {
   file: File;
   status: "uploading" | "success" | "error";
   progress: number;
-  documentType: DocumentType | "";
   uploadId?: string;
   errorMessage?: string;
 };
