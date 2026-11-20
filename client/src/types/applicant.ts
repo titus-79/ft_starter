@@ -26,6 +26,11 @@ export type ApplicantFormValues = {
   hasDrivingLicense: boolean;
   hasVehicle: boolean;
   mobilityRadius: string;
+  degrees: {
+    degreeTitle: string;
+    graduationYear: string;
+    degreeLevel: string;
+  }[];
   skills: { name: string }[];
 };
 

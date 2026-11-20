@@ -3,6 +3,7 @@ package com.ftstarter.infrastructure.mapper;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.ftstarter.domain.model.Applicant;
+import com.ftstarter.domain.model.ApplicantDegree;
 import com.ftstarter.domain.model.EmploymentCertificate;
 import com.ftstarter.infrastructure.n8n.N8nAnalysisResponse;
 import java.math.BigDecimal;
@@ -55,7 +56,8 @@ class ApplicantExtractionMapperTest {
                         "Temps plein",
                         null,
                         "France",
-                        "Paris")));
+                        "Paris")),
+                List.of(new ApplicantDegree(" Master Informatique ", 2019, " Bac+5 ")));
         N8nAnalysisResponse source = new N8nAnalysisResponse(
                 1.4,
                 Arrays.asList(" cni ", "Attestation employeur", "CNI", null, " "),
@@ -71,6 +73,9 @@ class ApplicantExtractionMapperTest {
                 .getFirst().employerName());
         assertEquals("38012986600014", result.applicant().employmentCertificates()
                 .getFirst().siret());
+        assertEquals(
+                new ApplicantDegree("Master Informatique", 2019, "Bac+5"),
+                result.applicant().degrees().getFirst());
     }
 
     @Test

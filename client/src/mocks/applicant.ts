@@ -33,6 +33,13 @@ export const mockApplicant: ApplicantFormValues = {
   hasDrivingLicense: true,
   hasVehicle: false,
   mobilityRadius: "30",
+  degrees: [
+    {
+      degreeTitle: "BTS",
+      graduationYear: "2010",
+      degreeLevel: "Bac +2",
+    },
+  ],
   skills: [
     { name: "Relation client" },
     { name: "Gestion de projet" },

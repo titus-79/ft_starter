@@ -31,7 +31,8 @@ public record Applicant(
         Boolean hasPersonalVehicle,
         Integer mobilityRadius,
         List<String> skills,
-        List<EmploymentCertificate> employmentCertificates) {
+        List<EmploymentCertificate> employmentCertificates,
+        List<ApplicantDegree> degrees) {
 
     public Applicant {
         skills = skills == null
@@ -40,12 +41,15 @@ public record Applicant(
         employmentCertificates = employmentCertificates == null
                 ? List.of()
                 : employmentCertificates.stream().filter(Objects::nonNull).toList();
+        degrees = degrees == null
+                ? List.of()
+                : degrees.stream().filter(Objects::nonNull).toList();
     }
 
     public static Applicant empty() {
         return new Applicant(
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, List.of(), List.of());
+                null, null, null, null, null, List.of(), List.of(), List.of());
     }
 }

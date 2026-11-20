@@ -14,6 +14,12 @@ export type EmploymentCertificateResponse = {
   endDate?: string | null;
 };
 
+export type ApplicantDegreeResponse = {
+  degreeTitle?: string | null;
+  graduationYear?: number | null;
+  degreeLevel?: string | null;
+};
+
 export type ExtractedApplicant = {
   lastName?: string | null;
   birthName?: string | null;
@@ -42,6 +48,7 @@ export type ExtractedApplicant = {
   mobilityRadius?: number | null;
   skills?: string[] | null;
   employmentCertificates?: EmploymentCertificateResponse[] | null;
+  degrees?: ApplicantDegreeResponse[] | null;
 };
 
 export type ApplicantExtractionResponse = {

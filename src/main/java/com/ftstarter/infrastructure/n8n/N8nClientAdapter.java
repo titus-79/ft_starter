@@ -1,5 +1,8 @@
 package com.ftstarter.infrastructure.n8n;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ftstarter.config.AppProperties;
 import com.ftstarter.domain.model.AnalysisPayload;
 import com.ftstarter.domain.model.ApplicantExtractionResponse;
@@ -10,10 +13,10 @@ import com.ftstarter.shared.exception.N8nTimeoutException;
 import com.ftstarter.shared.exception.N8nTransientException;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
-import org.springframework.core.codec.DecodingException;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.codec.DecodingException;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -27,16 +30,19 @@ public class N8nClientAdapter implements AnalysisWorkflowPort {
     private static final Logger log = LoggerFactory.getLogger(N8nClientAdapter.class);
 
     private final WebClient webClient;
+    private final ObjectMapper objectMapper;
     private final AppProperties.N8n n8nProperties;
     private final ApplicantExtractionMapper mapper;
     private final Retry retry;
 
     public N8nClientAdapter(
             WebClient n8nWebClient,
+            ObjectMapper objectMapper,
             AppProperties properties,
             ApplicantExtractionMapper mapper,
             RetryRegistry retryRegistry) {
         this.webClient = n8nWebClient;
+        this.objectMapper = objectMapper;
         this.n8nProperties = properties.n8n();
         this.mapper = mapper;
         this.retry = retryRegistry.retry("n8nAnalysis");
@@ -94,7 +100,8 @@ public class N8nClientAdapter implements AnalysisWorkflowPort {
                 .onStatus(
                         HttpStatusCode::is4xxClientError,
                         clientResponse -> rejectedRequest(clientResponse, payload.uploadId()))
-                .bodyToMono(N8nAnalysisResponse.class)
+                .bodyToMono(JsonNode.class)
+                .map(responseBody -> decodeResponse(responseBody, payload.uploadId()))
                 .doOnNext(n8nResponse -> log.info(
                         "n8n webhook response decoded: uploadId={}, detectedDocumentCount={}",
                         payload.uploadId(),
@@ -124,6 +131,75 @@ public class N8nClientAdapter implements AnalysisWorkflowPort {
                 payload.uploadId(),
                 result.documentsDetected().size());
         return result;
+    }
+
+    private N8nAnalysisResponse decodeResponse(JsonNode responseBody, String uploadId) {
+        JsonNode response = responseBody;
+        if (response == null || response.isNull()) {
+            throw new N8nAnalysisException("n8n returned an empty response");
+        }
+
+        if (response.isArray()) {
+            if (response.size() != 1) {
+                throw new N8nAnalysisException(
+                        "n8n response array must contain exactly one result");
+            }
+            response = response.get(0);
+        }
+
+        JsonNode output = response.path("output");
+        if (!output.isMissingNode() && !output.isNull()) {
+            String outputText = findOutputText(output);
+            if (outputText != null) {
+                log.info("Unwrapping structured JSON from n8n output: uploadId={}", uploadId);
+                return parseResponseText(outputText);
+            }
+            response = output;
+        }
+
+        try {
+            if (response.isTextual()) {
+                return parseResponseText(response.asText());
+            }
+            return objectMapper.treeToValue(response, N8nAnalysisResponse.class);
+        } catch (JsonProcessingException exception) {
+            throw new N8nAnalysisException(
+                    "n8n response does not match the expected JSON format",
+                    exception);
+        }
+    }
+
+    private N8nAnalysisResponse parseResponseText(String responseText) {
+        try {
+            return objectMapper.readValue(responseText, N8nAnalysisResponse.class);
+        } catch (JsonProcessingException exception) {
+            throw new N8nAnalysisException(
+                    "n8n output text is not valid applicant JSON",
+                    exception);
+        }
+    }
+
+    private String findOutputText(JsonNode node) {
+        if (node == null || node.isNull()) return null;
+        if (node.isArray()) {
+            for (JsonNode item : node) {
+                String text = findOutputText(item);
+                if (text != null) return text;
+            }
+            return null;
+        }
+        if (!node.isObject()) return null;
+
+        JsonNode type = node.get("type");
+        JsonNode text = node.get("text");
+        if (text != null
+                && text.isTextual()
+                && (type == null || "output_text".equals(type.asText()))) {
+            return text.asText();
+        }
+
+        String contentText = findOutputText(node.get("content"));
+        return contentText != null ? contentText : findOutputText(node.get("output"));
     }
 
     private Mono<? extends Throwable> transientError(ClientResponse response, String uploadId) {

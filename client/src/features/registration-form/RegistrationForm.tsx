@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useFieldArray, type UseFormReturn } from "react-hook-form";
+import { useFieldArray, useWatch, type UseFormReturn } from "react-hook-form";
 import { Icon } from "../../components/Icon";
 import { Field } from "../../components/Field";
 import { identityDocumentOptions } from "../../constants/formOptions";
@@ -26,6 +26,26 @@ export function RegistrationForm({
     formState: { errors },
   } = form;
   const { fields, append, remove } = useFieldArray({ control, name: "skills" });
+  const {
+    fields: degreeFields,
+    append: appendDegree,
+    remove: removeDegree,
+  } = useFieldArray({ control, name: "degrees" });
+  const watchedDegrees = useWatch({ control, name: "degrees" }) ?? [];
+  const sortedDegreeFields = degreeFields
+    .map((field, index) => ({
+      field,
+      index,
+      year: Number(watchedDegrees[index]?.graduationYear),
+    }))
+    .sort((left, right) => {
+      const leftHasYear = Number.isInteger(left.year) && left.year > 0;
+      const rightHasYear = Number.isInteger(right.year) && right.year > 0;
+      if (leftHasYear !== rightHasYear) return leftHasYear ? -1 : 1;
+      if (leftHasYear && left.year !== right.year)
+        return right.year - left.year;
+      return left.index - right.index;
+    });
   const [skill, setSkill] = useState("");
 
   function inputClass(field: keyof ApplicantFormValues, hasError: boolean) {
@@ -365,7 +385,7 @@ export function RegistrationForm({
         <section className="form-section" aria-labelledby="training-title">
           <h3 id="training-title">Formation</h3>
           <div className="field-grid">
-            <Field id="highestDiploma" label="Diplôme le plus élevé obtenu">
+            <Field id="highestDiploma" label="Diplôme le plus élevé (synthèse)">
               <input
                 id="highestDiploma"
                 list="highest-diploma-options"
@@ -385,7 +405,7 @@ export function RegistrationForm({
                 <option value="Doctorat" />
               </datalist>
             </Field>
-            <Field id="educationLevel" label="Niveau d’étude">
+            <Field id="educationLevel" label="Niveau du diplôme principal">
               <input
                 id="educationLevel"
                 list="education-level-options"
@@ -404,6 +424,98 @@ export function RegistrationForm({
                 <option value="Bac +5 ou plus" />
               </datalist>
             </Field>
+          </div>
+          <div className="degrees-list">
+            <div>
+              <h4>Tous les diplômes</h4>
+              <p className="section-intro">
+                Sans limite de nombre, classés de l’année d’obtention la plus
+                récente à la plus ancienne.
+              </p>
+            </div>
+            {sortedDegreeFields.length === 0 && (
+              <p className="not-provided">Aucun diplôme renseigné.</p>
+            )}
+            {sortedDegreeFields.map(({ field, index }, position) => (
+              <div
+                className="degree-entry"
+                key={field.id}
+                role="group"
+                aria-label={`Diplôme ${position + 1}`}
+              >
+                <div className="degree-fields">
+                  <Field
+                    id={`degree-title-${field.id}`}
+                    label="Intitulé du diplôme"
+                  >
+                    <input
+                      id={`degree-title-${field.id}`}
+                      className={inputClass("degrees", false)}
+                      {...register(`degrees.${index}.degreeTitle`, {
+                        onChange: () => clearInjected("degrees"),
+                      })}
+                    />
+                  </Field>
+                  <Field
+                    id={`degree-year-${field.id}`}
+                    label="Année d’obtention"
+                  >
+                    <input
+                      id={`degree-year-${field.id}`}
+                      type="number"
+                      min="1900"
+                      max="2100"
+                      inputMode="numeric"
+                      className={inputClass("degrees", false)}
+                      {...register(`degrees.${index}.graduationYear`, {
+                        onChange: () => clearInjected("degrees"),
+                      })}
+                    />
+                  </Field>
+                  <Field
+                    id={`degree-level-${field.id}`}
+                    label="Niveau du diplôme"
+                  >
+                    <input
+                      id={`degree-level-${field.id}`}
+                      list="degree-level-options"
+                      className={inputClass("degrees", false)}
+                      {...register(`degrees.${index}.degreeLevel`, {
+                        onChange: () => clearInjected("degrees"),
+                      })}
+                    />
+                  </Field>
+                  <button
+                    type="button"
+                    className="icon-button degree-remove"
+                    aria-label={`Supprimer le diplôme ${position + 1}`}
+                    onClick={() => removeDegree(index)}
+                  >
+                    <Icon name="trash" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <datalist id="degree-level-options">
+              <option value="Bac+5" />
+              <option value="Bac+3" />
+              <option value="Bac+2" />
+              <option value="Bac" />
+              <option value="CAP / BEP" />
+            </datalist>
+            <button
+              type="button"
+              className="button button-secondary degree-add"
+              onClick={() =>
+                appendDegree({
+                  degreeTitle: "",
+                  graduationYear: "",
+                  degreeLevel: "",
+                })
+              }
+            >
+              <Icon name="plus" /> Ajouter un diplôme
+            </button>
           </div>
         </section>
 

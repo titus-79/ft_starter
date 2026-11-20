@@ -18,7 +18,7 @@ Le backend écoute sur `http://localhost:8080`. L'interface Swagger UI est dispo
 - `POST /api/v1/analysis/{uploadId}` — lit les documents stockés, les encode en Base64, appelle `POST {n8n.base-url}/analyze`, puis renvoie la réponse normalisée.
 - `GET /api/v1/analysis/{uploadId}` — consulte le résultat en mémoire ; renvoie `404 ANALYSIS_NOT_FOUND` avant l'analyse.
 
-Les erreurs ont le format `{ timestamp, code, message, details }`. Les réponses d'analyse n8n sont normalisées vers `confidenceScore`, `documentsDetected` et `applicant`, avec `employmentCertificates` pour les attestations employeur.
+Les erreurs ont le format `{ timestamp, code, message, details }`. Les réponses d'analyse n8n sont normalisées vers `confidenceScore`, `documentsDetected` et `applicant`, avec `employmentCertificates` pour les attestations et `degrees` pour l'ensemble des diplômes.
 
 ### Configuration
 

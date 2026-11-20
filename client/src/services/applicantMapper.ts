@@ -84,6 +84,36 @@ export function mapExtractionToApplicantForm(
       .map((name) => ({ name }));
   }
 
+  const degrees = (applicant.degrees ?? [])
+    .filter(
+      (degree) =>
+        degree.degreeTitle?.trim() ||
+        degree.degreeLevel?.trim() ||
+        degree.graduationYear != null,
+    )
+    .map((degree) => ({
+      degreeTitle: degree.degreeTitle?.trim() ?? "",
+      graduationYear:
+        degree.graduationYear == null ? "" : String(degree.graduationYear),
+      degreeLevel: degree.degreeLevel?.trim() ?? "",
+    }))
+    .sort((left, right) => {
+      const leftYear = Number(left.graduationYear) || Number.NEGATIVE_INFINITY;
+      const rightYear =
+        Number(right.graduationYear) || Number.NEGATIVE_INFINITY;
+      return rightYear - leftYear;
+    });
+
+  if (degrees.length > 0) {
+    patch.degrees = degrees;
+  } else {
+    const degreeTitle = applicant.highestDegree?.trim() ?? "";
+    const degreeLevel = applicant.educationLevel?.trim() ?? "";
+    if (degreeTitle || degreeLevel) {
+      patch.degrees = [{ degreeTitle, graduationYear: "", degreeLevel }];
+    }
+  }
+
   return patch;
 }
 

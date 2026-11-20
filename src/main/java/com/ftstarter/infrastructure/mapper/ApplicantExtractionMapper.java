@@ -1,6 +1,7 @@
 package com.ftstarter.infrastructure.mapper;
 
 import com.ftstarter.domain.model.Applicant;
+import com.ftstarter.domain.model.ApplicantDegree;
 import com.ftstarter.domain.model.ApplicantExtractionResponse;
 import com.ftstarter.domain.model.EmploymentCertificate;
 import com.ftstarter.infrastructure.n8n.N8nAnalysisResponse;
@@ -47,6 +48,10 @@ public class ApplicantExtractionMapper {
                 .filter(Objects::nonNull)
                 .map(this::normalizeCertificate)
                 .toList();
+        List<ApplicantDegree> degrees = applicant.degrees().stream()
+                .filter(Objects::nonNull)
+                .map(this::normalizeDegree)
+                .toList();
         return new Applicant(
                 trim(applicant.lastName()),
                 trim(applicant.birthName()),
@@ -74,7 +79,15 @@ public class ApplicantExtractionMapper {
                 applicant.hasPersonalVehicle(),
                 applicant.mobilityRadius(),
                 skills,
-                certificates);
+                certificates,
+                degrees);
+    }
+
+    private ApplicantDegree normalizeDegree(ApplicantDegree degree) {
+        return new ApplicantDegree(
+                trim(degree.degreeTitle()),
+                degree.graduationYear(),
+                trim(degree.degreeLevel()));
     }
 
     private EmploymentCertificate normalizeCertificate(EmploymentCertificate certificate) {

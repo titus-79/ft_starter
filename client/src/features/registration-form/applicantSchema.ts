@@ -28,6 +28,13 @@ export const applicantSchema = z.object({
   hasDrivingLicense: z.boolean(),
   hasVehicle: z.boolean(),
   mobilityRadius: z.string(),
+  degrees: z.array(
+    z.object({
+      degreeTitle: z.string(),
+      graduationYear: z.string(),
+      degreeLevel: z.string(),
+    }),
+  ),
   skills: z.array(z.object({ name: z.string() })),
 });
 

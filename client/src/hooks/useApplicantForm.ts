@@ -29,6 +29,7 @@ const emptyApplicant: ApplicantFormValues = {
   hasDrivingLicense: false,
   hasVehicle: false,
   mobilityRadius: "",
+  degrees: [],
   skills: [],
 };
 
@@ -46,7 +47,15 @@ export function useApplicantForm(hasEmployerCertificate: boolean) {
   const completedFields = trackableFields.filter(([key, value]) => {
     if (key === "skills")
       return (
-        Array.isArray(value) && value.some((skill) => (skill.name ?? "").trim())
+        Array.isArray(value) &&
+        value.some((item) => "name" in item && (item.name ?? "").trim())
+      );
+    if (key === "degrees")
+      return (
+        Array.isArray(value) &&
+        value.some(
+          (item) => "degreeTitle" in item && (item.degreeTitle ?? "").trim(),
+        )
       );
     return typeof value === "string" && value.trim().length > 0;
   }).length;

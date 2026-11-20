@@ -664,6 +664,35 @@
   background: #f5f5ff;
   line-height: 1.5;
 }
+.degrees-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+.degrees-list h4 {
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+.degree-entry {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+.degree-fields {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.5fr) minmax(110px, 0.6fr) minmax(0, 1fr)
+    34px;
+  align-items: end;
+  gap: 12px;
+}
+.degree-remove {
+  margin-bottom: 1px;
+}
+.degree-add {
+  justify-self: start;
+}
 .skill-add {
   display: flex;
   align-items: center;
@@ -1102,6 +1131,16 @@
   .step-name {
     max-width: 115px;
     line-height: 1.35;
+  }
+  .degree-fields {
+    grid-template-columns: minmax(0, 1fr) minmax(110px, 0.7fr);
+  }
+  .degree-fields .form-field:first-child {
+    grid-column: 1 / -1;
+  }
+  .degree-remove {
+    grid-column: 2;
+    justify-self: end;
   }
 }
 @media (max-width: 520px) {

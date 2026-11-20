@@ -7,6 +7,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ftstarter.config.AppProperties;
 import com.ftstarter.domain.model.AnalysisDocument;
 import com.ftstarter.domain.model.AnalysisPayload;
@@ -18,6 +20,7 @@ import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterAll;
@@ -83,6 +86,49 @@ class N8nClientAdapterTest {
     }
 
     @Test
+    void unwrapsN8nOutputTextAndPreservesAllApplicantDegrees() throws JsonProcessingException {
+        String extractedJson = """
+                {
+                  "confidenceScore": 0.94,
+                  "documentsDetected": ["CV"],
+                  "applicant": {
+                    "highestDegree": "Master Informatique, parcours Génie logiciel",
+                    "educationLevel": "Bac+5",
+                    "degrees": [
+                      {
+                        "degreeTitle": "Master Informatique, parcours Génie logiciel",
+                        "graduationYear": 2019,
+                        "degreeLevel": "Bac+5"
+                      },
+                      {
+                        "degreeTitle": "Licence Informatique",
+                        "graduationYear": 2017,
+                        "degreeLevel": "Bac+3"
+                      }
+                    ]
+                  }
+                }
+                """;
+        String n8nEnvelope = new ObjectMapper().writeValueAsString(List.of(
+                Map.of("output", List.of(
+                        Map.of("content", List.of(Map.of(
+                                "type", "output_text",
+                                "text", extractedJson)))))));
+        wireMock.stubFor(post(urlEqualTo("/webhook/analyze"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(n8nEnvelope)));
+
+        var result = adapter(Duration.ofSeconds(2)).analyze(payload());
+
+        assertEquals(2, result.applicant().degrees().size());
+        assertEquals(
+                "Master Informatique, parcours Génie logiciel",
+                result.applicant().degrees().getFirst().degreeTitle());
+        assertEquals(2019, result.applicant().degrees().getFirst().graduationYear());
+    }
+
+    @Test
     void convertsWorkflowServerErrorsToRetriableErrors() {
         wireMock.stubFor(post(urlEqualTo("/webhook/analyze"))
                 .willReturn(aResponse().withStatus(503)));
@@ -127,6 +173,7 @@ class N8nClientAdapterTest {
                 .build();
         return new N8nClientAdapter(
                 webClient,
+                new ObjectMapper().findAndRegisterModules(),
                 properties,
                 new ApplicantExtractionMapper(),
                 RetryRegistry.of(RetryConfig.custom().maxAttempts(1).build()));
