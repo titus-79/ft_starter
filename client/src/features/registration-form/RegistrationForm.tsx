@@ -366,39 +366,43 @@ export function RegistrationForm({
           <h3 id="training-title">Formation</h3>
           <div className="field-grid">
             <Field id="highestDiploma" label="Diplôme le plus élevé obtenu">
-              <select
+              <input
                 id="highestDiploma"
+                list="highest-diploma-options"
                 className={inputClass("highestDiploma", false)}
                 {...register("highestDiploma", {
                   onChange: () => clearInjected("highestDiploma"),
                 })}
-              >
-                <option value="">Sélectionnez</option>
-                <option>Sans diplôme</option>
-                <option>CAP / BEP</option>
-                <option>Baccalauréat</option>
-                <option>BTS</option>
-                <option>Licence</option>
-                <option>Master</option>
-                <option>Doctorat</option>
-              </select>
+                placeholder="Ex. Master Informatique, parcours Génie logiciel"
+              />
+              <datalist id="highest-diploma-options">
+                <option value="Sans diplôme" />
+                <option value="CAP / BEP" />
+                <option value="Baccalauréat" />
+                <option value="BTS" />
+                <option value="Licence" />
+                <option value="Master" />
+                <option value="Doctorat" />
+              </datalist>
             </Field>
             <Field id="educationLevel" label="Niveau d’étude">
-              <select
+              <input
                 id="educationLevel"
+                list="education-level-options"
                 className={inputClass("educationLevel", false)}
                 {...register("educationLevel", {
                   onChange: () => clearInjected("educationLevel"),
                 })}
-              >
-                <option value="">Sélectionnez</option>
-                <option>Sans diplôme</option>
-                <option>CAP / BEP</option>
-                <option>Bac</option>
-                <option>Bac +2</option>
-                <option>Bac +3</option>
-                <option>Bac +5 ou plus</option>
-              </select>
+                placeholder="Ex. Bac+5"
+              />
+              <datalist id="education-level-options">
+                <option value="Sans diplôme" />
+                <option value="CAP / BEP" />
+                <option value="Bac" />
+                <option value="Bac +2" />
+                <option value="Bac +3" />
+                <option value="Bac +5 ou plus" />
+              </datalist>
             </Field>
           </div>
         </section>
